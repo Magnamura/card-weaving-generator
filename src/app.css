@@ -1,0 +1,35 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* src/app.css */
+
+@media print {
+	/* Hide elements that shouldn't be printed */
+	.print-hidden {
+		display: none !important;
+	}
+
+	/* NEW: Show an element that is normally hidden */
+	.print-block {
+		display: block !important;
+	}
+
+	/* Ensure the main grid and its contents are visible */
+	.printable-area {
+		display: block !important;
+		grid-template-columns: 1fr !important; /* Stack columns on print */
+	}
+
+	/* Remove shadows and borders for cleaner printing */
+	.print-no-style {
+		border: none !important;
+		box-shadow: none !important;
+	}
+
+	/* Ensure background colors are printed */
+	* {
+		-webkit-print-color-adjust: exact !important;
+		print-color-adjust: exact !important;
+	}
+}
