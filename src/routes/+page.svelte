@@ -6,8 +6,7 @@
 	import Controls from '$lib/components/Controls.svelte';
 	import ColorPalette from '$lib/components/ColorPalette.svelte';
 	import ThreadingDiagram from '$lib/components/ThreadingDiagram.svelte';
-	import PatternDisplay from '$lib/components/PatternDisplay.svelte';
-	import TurningDiagram from '$lib/components/TurningDiagram.svelte';
+	import LivePreview from '$lib/components/LivePreview.svelte';
 	import ShareAndLoad from '$lib/components/ShareAndLoad.svelte';
 
 	const DEFAULT_CARDS = 12;
@@ -23,41 +22,33 @@
 	let turningSequence = $state<TurningSequence>([]);
 	let pattern = $state<Pattern>([]);
 
-	let turningDiagramEl: HTMLElement | undefined;
-	let patternDisplayEl: HTMLElement | undefined;
-
 	// --- FINAL, State-Preserving Effect to Sync Grids ---
 	// This effect intelligently adds or removes rows/columns without resetting the user's work.
 	$effect(() => {
 		const targetCards = numberOfCards;
 		const targetTurns = numberOfTurns;
 
-		// --- Sync Threading Diagram Columns ---
+		// Sync Threading Diagram Columns
 		const currentCardCount = threading.length;
 		if (targetCards > currentCardCount) {
-			// Add new cards to the end
 			for (let i = currentCardCount; i < targetCards; i++) {
 				threading.push({ colors: [...defaultCardColors], direction: 'S' });
 			}
 		} else if (targetCards < currentCardCount) {
-			// Truncate the array
 			threading.length = targetCards;
 		}
 
-		// --- Sync Turning Diagram Rows ---
+		// Sync Turning Diagram Rows
 		const currentTurnCount = turningSequence.length;
 		if (targetTurns > currentTurnCount) {
-			// Add new rows to the end
 			for (let i = currentTurnCount; i < targetTurns; i++) {
 				turningSequence.push(Array(targetCards).fill('F'));
 			}
 		} else if (targetTurns < currentTurnCount) {
-			// Truncate the array
 			turningSequence.length = targetTurns;
 		}
 
-		// --- Sync Turning Diagram Columns for Every Row ---
-		// This ensures that when you add a card, every row gets the new column.
+		// Sync Turning Diagram Columns for Every Row
 		for (const row of turningSequence) {
 			const currentColCount = row.length;
 			if (targetCards > currentColCount) {
@@ -67,30 +58,15 @@
 			}
 		}
 		
-		// Signal to Svelte that the arrays have been mutated "deeply".
 		threading = threading;
 		turningSequence = turningSequence;
 	});
 
-	// --- Pattern Generation Effect ---
+	// Pattern Generation Effect
 	$effect(() => {
 		if (threading.length > 0 && turningSequence.length > 0) {
 			pattern = generatePattern(threading, turningSequence);
 		}
-	});
-	
-	// --- Height Synchronization Effect ---
-	$effect(() => {
-		const _turningData = turningSequence;
-		setTimeout(() => {
-			if (turningDiagramEl && patternDisplayEl) {
-				turningDiagramEl.style.height = 'auto';
-				patternDisplayEl.style.height = 'auto';
-				const maxHeight = Math.max(turningDiagramEl.offsetHeight, patternDisplayEl.offsetHeight);
-				turningDiagramEl.style.height = `${maxHeight}px`;
-				patternDisplayEl.style.height = `${maxHeight}px`;
-			}
-		}, 0);
 	});
 
 	// --- Event Handlers ---
@@ -112,8 +88,6 @@
 	// --- Action Handlers ---
 	function resetState() {
 		if (confirm('Are you sure you want to reset the pattern?')) {
-			// To force a full reset, we empty the arrays before setting the default dimensions.
-			// This tells the main effect to build completely fresh grids.
 			threading = [];
 			turningSequence = [];
 			numberOfCards = DEFAULT_CARDS;
@@ -143,7 +117,6 @@
 	</header>
 
 	<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 printable-area">
-		<!-- Left Column (unchanged) -->
 		<div class="flex flex-col gap-6 print-hidden">
 			<ShareAndLoad {threading} {turningSequence} onReset={resetState} onLoad={loadState} />
 			<Controls 
@@ -156,37 +129,10 @@
 			<ThreadingDiagram {threading} {selectedColor} onCellClick={handleCellUpdate} onDirectionToggle={handleDirectionToggle} />
 		</div>
 
-		<!-- Right Column (Now with separate Screen and Print views) -->
 		<div class="flex flex-col gap-6">
-			
-			<!-- 1. SCREEN-ONLY VIEW -->
-			<!-- This container holds the side-by-side layout for the screen and is hidden on print -->
-			<div class="flex flex-col md:flex-row items-start gap-6 print-hidden">
-				<div class="print-no-style" bind:this={turningDiagramEl}>
-					<TurningDiagram {turningSequence} onTurnChange={handleTurnChange} />
-				</div>
-				<div class="print-no-style" bind:this={patternDisplayEl}>
-					<PatternDisplay {pattern} {threading} {turningSequence} />
-				</div>
+			<div class="print-no-style">
+				<LivePreview {pattern} {threading} {turningSequence} onTurnChange={handleTurnChange} />
 			</div>
-
-			<!-- 2. PRINT-ONLY VIEW -->
-			<!-- This container is hidden on screen and becomes a vertical block for printing -->
-			<div class="hidden print-block">
-				<!-- We render clean, non-interactive versions of all three diagrams -->
-				<div class="print-no-style mb-6">
-					<!-- The ThreadingDiagram is now included in the printout -->
-					<ThreadingDiagram {threading} {selectedColor} onCellClick={handleCellUpdate} onDirectionToggle={handleDirectionToggle} />
-				</div>
-				<div class="print-no-style mb-6">
-					<TurningDiagram {turningSequence} onTurnChange={handleTurnChange} />
-				</div>
-				<div class="print-no-style">
-					<PatternDisplay {pattern} {threading} />
-				</div>
-			</div>
-
 		</div>
 	</div>
 </main>
-
