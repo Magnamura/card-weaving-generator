@@ -166,7 +166,7 @@
 					<TurningDiagram {turningSequence} onTurnChange={handleTurnChange} />
 				</div>
 				<div class="print-no-style" bind:this={patternDisplayEl}>
-					<PatternDisplay {pattern} {threading} />
+					<PatternDisplay {pattern} {threading} {turningSequence} />
 				</div>
 			</div>
 

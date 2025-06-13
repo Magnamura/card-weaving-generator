@@ -9,9 +9,6 @@
 	let isPainting = false;
 	let paintTurnState: Turn | null = null;
 
-	// This is a reactive variable that is a reversed copy for display purposes.
-	$: reversedSequence = [...turningSequence].reverse();
-
 	function handleMouseDown(rowIndex: number, cardIndex: number, currentTurn: Turn) {
 		isPainting = true;
 		if (currentTurn === 'F') {
@@ -45,27 +42,28 @@
 		on:mouseleave={stopPainting}
 		role="group"
 	>
-		<!-- This is the main container that builds from the bottom up -->
-		<div class="inline-flex flex-col-reverse">
-			<!-- A SINGLE LOOP now builds the entire diagram row-by-row -->
-			{#each reversedSequence as row, i (i)}
-				{@const originalRowIndex = turningSequence.length - 1 - i}
-				{@const displayNumber = originalRowIndex + 1}
-				
-				<!-- Each "meta-row" is a flex container for the number and the buttons -->
-				<div 
-					class="flex flex-row items-start gap-2"
-					class:mt-2={displayNumber > 1 && displayNumber % 4 === 1}
-				>
-					<!-- The Number Cell -->
-					<div class="w-7 h-7 flex items-center justify-center text-xs font-mono text-base-content/60 pt-px">
-						{displayNumber}
+		<div class="inline-flex flex-row items-start gap-2">
+			<!-- Column 1: Row Numbers -->
+			<div class="flex flex-col-reverse text-center pt-px">
+				{#each turningSequence as _, rowIndex (rowIndex)}
+					<div
+						class="w-7 h-7 flex items-center justify-center text-xs font-mono text-base-content/60"
+						class:mt-2={rowIndex > 0 && (rowIndex + 1) % 4 === 0}
+					>
+						{rowIndex + 1}
 					</div>
+				{/each}
+			</div>
 
-					<!-- The Button Row -->
-					<div class="flex flex-row gap-px">
+			<!-- Column 2: The Interactive Grid -->
+			<div class="inline-flex flex-col-reverse">
+				{#each turningSequence as row, rowIndex (rowIndex)}
+					<div
+						class="flex flex-row gap-px"
+						class:mt-2={rowIndex > 0 && (rowIndex + 1) % 4 === 0}
+					>
 						<!-- svelte-ignore a11y_mouse_events_have_key_events -->
-						{#each row as turn, cardIndex (`${originalRowIndex}-${cardIndex}`)}
+						{#each row as turn, cardIndex (`${rowIndex}-${cardIndex}`)}
 							<button
 								class="w-7 h-7 flex items-center justify-center font-mono text-xs font-bold"
 								class:bg-blue-200={turn === 'F'}
@@ -74,15 +72,15 @@
 								class:text-red-800={turn === 'B'}
 								class:bg-gray-200={turn === 'I'}
 								class:text-gray-500={turn === 'I'}
-								on:mousedown={() => handleMouseDown(originalRowIndex, cardIndex, turn)}
-								on:mouseover={() => handleMouseOver(originalRowIndex, cardIndex)}
+								on:mousedown={() => handleMouseDown(rowIndex, cardIndex, turn)}
+								on:mouseover={() => handleMouseOver(rowIndex, cardIndex)}
 							>
 								{turn}
 							</button>
 						{/each}
 					</div>
-				</div>
-			{/each}
+				{/each}
+			</div>
 		</div>
 	</div>
 </div>
